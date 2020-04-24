@@ -1,140 +1,210 @@
-     document.addEventListener('DOMContentLoaded',()=>{
-     const squares=document.querySelectorAll('.grid div')
-     const resultDisplay=document.querySelector('#result')
+document.addEventListener('DOMContentLoaded',()=>{
+   //get elements
+    const squares = document.querySelectorAll('.grid div')
+    const timeLeft = document.querySelector('#time-left')
+    const resultDisplay = document.querySelector('#result')
+    const startBtn = document.querySelector('#button')
+    const carsLeft = document.querySelectorAll('.car-left')
+    const carsRight = document.querySelectorAll('.car-right')
+    const logsLeft = document.querySelectorAll('.log-left')
+    const logsRight = document.querySelectorAll('.log-right')
 
-    //Initialize Game
-     let width = 15
-     let currentShooterIndex = 202
-     let currentInvaderIndex = 0
-     let alienInvadersTakeDown = []
-        
-     let result = 0
-     let direction = 1
-     let invaderId
+   //initialize game
+    let width = 9
+    let currentIndex = 76
+    let timerId
+    let currentTime = 20
+   //render frong on starting block
+   // squares[currentIndex].classList.add('frog')
 
-    //Define the ALien Invaders
-    const alienInvaders = [
-        0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-        15,16,17,18,19,20,21,22,23,24,
-        30,31,32,33,34,35,36,37,38,39
-      ]
+   //write function to move the frog based on arrow keys
+    function moveFrog(e){
+      //remove frong class from existing block
+        squares[currentIndex].classList.remove('frog')
 
-    //Draw the alien invaders
-        alienInvaders.forEach(invaders=> squares[currentInvaderIndex+invaders].classList.add('invader'))
-    
-    //Draw the shooter
-        squares[currentShooterIndex].classList.add('shooter')
-    
-    //move the shooter along the line
-        function moveShooter(e){
-            squares[currentShooterIndex].classList.remove('shooter')
-            switch(e.keyCode){
-                case 37:
-                    if(currentShooterIndex % width !==0) currentShooterIndex -=1 //move left
-                    break;
-                case 39:
-                    if(currentShooterIndex % width < width-1)currentShooterIndex +=1 //move right
-                    break;
-            }   
-            squares[currentShooterIndex].classList.add('shooter')
-            
-        }
-
-    //add event listener for moving shooter
-        document.addEventListener('keydown',moveShooter)
-    
-    //move the alien invaders
-    function moveInvaders() {
-        //get extreme edges
-        const leftEdge = alienInvaders[0] % width === 0
-        const rightEdge = alienInvaders[alienInvaders.length - 1] % width === width - 1
-
-        //compute new directions
-          if((leftEdge && direction === -1) || (rightEdge && direction === 1)){
-            direction = width
-          } else if (direction === width) {
-          if (leftEdge) direction = 1
-          else direction = -1
-          }
-          //remove invader class
-          for (let i = 0; i <= alienInvaders.length - 1; i++) {
-            squares[alienInvaders[i]].classList.remove('invader')
-          }
-          //add new directions to th alien invaders
-          for (let i = 0; i <= alienInvaders.length - 1; i++) {
-            alienInvaders[i] += direction
-          }
-          //add invader class to new invaders array
-          for (let i = 0; i <= alienInvaders.length - 1; i++) {
-              if(!alienInvadersTakeDown.includes(i)){
-                squares[alienInvaders[i]].classList.add('invader')
-              }
-          }
-          //Game over condition 1
-            if(squares[currentShooterIndex].classList.contains('invader', 'shooter')) {
-                resultDisplay.textContent = 'Game Over'
-                squares[currentShooterIndex].classList.add('boom')
-            clearInterval(invaderId)
-            }
-          //Game over condition 2
-            for (let i = 0; i <= alienInvaders.length - 1; i++){
-                if(alienInvaders[i] > (squares.length - (width -1))){
-                    resultDisplay.textContent = 'Game Over'
-                    clearInterval(invaderId)
-                }
-            }
-          //Win Condition
-            if(alienInvadersTakeDown.length === alienInvaders.length){
-                resultDisplay.textContent="You Win!!"
-                clearInterval(invaderId)
-            }
-      }
-      //Add interval for moving invaders
-      invaderId = setInterval(moveInvaders, 500)
-
-    //Shoot Aliens
-    function shoot(e){
-        let laserId
-        let currentLaserIndex = currentShooterIndex
-        //console.log(`currentLaserIndex-${currentLaserIndex}-currentShooterIndex-${currentShooterIndex}`)
-        //move the laser from the shooter to the alien invader
-
-        function moveLaser(){
-            squares[currentLaserIndex].classList.remove('laser')
-            currentLaserIndex -= width //move a row up
-            squares[currentLaserIndex].classList.add('laser')
-            
-            //remove/kill aliens
-            if(squares[currentLaserIndex].classList.contains('invader')){
-                squares[currentLaserIndex].classList.remove('laser')
-                squares[currentLaserIndex].classList.remove('invader')
-                squares[currentLaserIndex].classList.add('boom')
-
-                //remove boom after 250ms
-                setTimeout(() => squares[currentLaserIndex].classList.remove('boom'),220)
-                clearInterval(laserId)
-
-                //add taken down invaders to a new array
-                const alientakenDown = alienInvaders.indexOf(currentLaserIndex)
-                alienInvadersTakeDown.push(alientakenDown)
-                result++
-                resultDisplay.textContent = result
-            }
-
-            //remove laser
-            if(currentLaserIndex < width){
-                clearInterval(laserId)
-                setTimeout(()=> squares[currentLaserIndex].classList.remove('laser'),100)
-            }
-
-        }
         switch(e.keyCode){
-            case 32:
-                laserId:setInterval(moveLaser,100)
+            case 37:
+                if(currentIndex % width !==0) currentIndex -=1
+                break;
+            case 38:
+                if(currentIndex - width >= 0) currentIndex -= width
+                break;
+            case 39:
+                if(currentIndex % width < width -1) currentIndex +=1
+                break;
+            case 40:
+                if(currentIndex + width < width * width) currentIndex += width
+                break;
+        }
+
+     //add frong class to new frog's index
+        squares[currentIndex].classList.add('frog')
+     //check if frog movement has led to win/loose
+        win()
+        loose()
+    }
+
+   //move cars
+    function autoMoveCars(){
+        carsLeft.forEach(carLeft => moveCarsLeft(carLeft))
+        carsRight.forEach(carRight => moveCarsRight(carRight))
+    }
+   //move the car left on a time loop
+    function moveCarsLeft(carLeft){
+        switch(true){
+            case carLeft.classList.contains('c1'):
+                carLeft.classList.remove('c1')
+                carLeft.classList.add('c2')
+                break;
+            case carLeft.classList.contains('c2'):
+                carLeft.classList.remove('c2')
+                carLeft.classList.add('c3')
+                break;
+            case carLeft.classList.contains('c3'):
+                carLeft.classList.remove('c3')
+                carLeft.classList.add('c1')
                 break;
         }
     }
-    //eventlistener for shoot method
-    document.addEventListener('keyup',shoot)
+  //move the car right on a time loop
+    function moveCarsRight(carRight){
+        switch(true){
+            case carRight.classList.contains('c1'):
+                carRight.classList.remove('c1')
+                carRight.classList.add('c3')
+            break;
+            case carRight.classList.contains('c2'):
+                carRight.classList.remove('c2')
+                carRight.classList.add('c1')
+            break;
+            case carRight.classList.contains('c3'):
+                carRight.classList.remove('c3')
+                carRight.classList.add('c2')
+            break;
+        }
+    }
 
- })
+  //move logs
+    function autoMoveLogs(){
+        logsLeft.forEach(logLeft => moveLogsLeft(logLeft))
+        logsRight.forEach(logRight => moveLogsRight(logRight))
+    }
+  //move logs Left
+    function moveLogsLeft(logLeft){
+        switch(true){
+            case logLeft.classList.contains('l1'):
+                logLeft.classList.remove('l1')
+                logLeft.classList.add('l2')
+                break;
+            case logLeft.classList.contains('l2'):
+                logLeft.classList.remove('l2')
+                logLeft.classList.add('l3')
+                break;
+            case logLeft.classList.contains('l3'):
+                logLeft.classList.remove('l3')
+                logLeft.classList.add('l4')
+                break;
+            case logLeft.classList.contains('l4'):
+                logLeft.classList.remove('l4')
+                logLeft.classList.add('l5')
+                break;
+            case logLeft.classList.contains('l5'):
+                logLeft.classList.remove('l5')
+                logLeft.classList.add('l1')
+                break;
+        }       
+    }
+  //move logs right
+    function moveLogsRight(logRight){
+        switch(true){
+            case logRight.classList.contains('l1'):
+                logRight.classList.remove('l1')
+                logRight.classList.add('l5')
+                break;
+            case logRight.classList.contains('l2'):
+                logRight.classList.remove('l2')
+                logRight.classList.add('l1')
+                break;
+            case logRight.classList.contains('l3'):
+                logRight.classList.remove('l3')
+                logRight.classList.add('l2')
+                break;
+            case logRight.classList.contains('l4'):
+                logRight.classList.remove('l4')
+                logRight.classList.add('l3')
+                break;
+            case logRight.classList.contains('l5'):
+                logRight.classList.remove('l5')
+                logRight.classList.add('l4')
+            
+        }
+    }
+     
+   //Rules to win 
+    function win(){
+        if(squares[4].classList.contains('frog')){
+            resultDisplay.innerHTML='YOU WON!!'
+            squares[currentIndex].classList.remove('frog')
+            clearInterval(timerId)
+            document.removeEventListener('keyup',moveFrog)
+        }
+    }
+   //Rules to loose
+    function loose(){
+        if((currentTime === 0) || (squares[currentIndex].classList.contains('c1'))
+          || (squares[currentIndex].classList.contains('l5'))  
+          ||(squares[currentIndex].classList.contains('l4'))){
+              resultDisplay.innerHTML='YOU LOOSE'
+              resultDisplay.style.color = "red"
+              squares[currentIndex].classList.remove('frog')
+              clearInterval(timerId)
+              document.removeEventListener('keyup',moveFrog)
+        }
+    }
+   
+  //move the frog when its on the log moving left
+    function moveWithLogLeft(){
+        //we got the index of log from the html's hardcoded divs
+        if(currentIndex >=27 && currentIndex <35){
+            squares[currentIndex].classList.remove('frog') 
+            currentIndex +=1
+            squares[currentIndex].classList.add('frog')
+        }
+    }
+  //move the frog when its on the log movinf right
+    function moveWithLogRight(){
+        if(currentIndex > 18 && currentIndex <= 26){
+            squares[currentIndex].classList.remove('frog')
+            currentIndex -=1
+            squares[currentIndex].classList.add('frog')
+        }
+    }
+  //generate random HexColor
+    const generateRandomColor = () =>{
+        let hex = (Math.random() * 0xfffff * 1000000).toString(16)
+        return '#' + hex.slice(0,6)
+    }
+  //a collective function which handles all the moving pieces
+    function movePieces(){
+        console.log('peices moved')
+        currentTime--
+        timeLeft.textContent = currentTime
+        timeLeft.style.color = generateRandomColor()
+        autoMoveCars()
+        autoMoveLogs()
+        moveWithLogLeft()
+        moveWithLogRight()
+        loose()
+    }
+  //start/pause the game
+    startBtn.addEventListener('click',()=>{
+        console.log('start clicked')
+        if(timerId){
+            clearInterval(timerId)
+        }else{
+            timerId = setInterval(movePieces,1000)
+            document.addEventListener('keyup',moveFrog)
+        }
+    })
+
+})

@@ -1,210 +1,210 @@
 document.addEventListener('DOMContentLoaded',()=>{
-   //get elements
-    const squares = document.querySelectorAll('.grid div')
-    const timeLeft = document.querySelector('#time-left')
-    const resultDisplay = document.querySelector('#result')
-    const startBtn = document.querySelector('#button')
-    const carsLeft = document.querySelectorAll('.car-left')
-    const carsRight = document.querySelectorAll('.car-right')
-    const logsLeft = document.querySelectorAll('.log-left')
-    const logsRight = document.querySelectorAll('.log-right')
+    const startBtn = document.querySelector('button')
+    const grid = document.querySelector('.grid')
+    let squares = Array.from(grid.querySelectorAll('div'))
+    const displaySquares = document.querySelectorAll('.previous-grid div')
+    const scoreDisplay = document.querySelector('.score-display')
+    const lineDisplay = document.querySelector('.line-display')
 
-   //initialize game
-    let width = 9
-    let currentIndex = 76
+
+    const width = 10
+    const height = 20
+    let currentPosition = 4
+    let currentRotation = 0
     let timerId
-    let currentTime = 20
-   //render frong on starting block
-   // squares[currentIndex].classList.add('frog')
-
-   //write function to move the frog based on arrow keys
-    function moveFrog(e){
-      //remove frong class from existing block
-        squares[currentIndex].classList.remove('frog')
-
-        switch(e.keyCode){
-            case 37:
-                if(currentIndex % width !==0) currentIndex -=1
-                break;
-            case 38:
-                if(currentIndex - width >= 0) currentIndex -= width
-                break;
-            case 39:
-                if(currentIndex % width < width -1) currentIndex +=1
-                break;
-            case 40:
-                if(currentIndex + width < width * width) currentIndex += width
-                break;
+    let score = 0
+    let lines = 0
+    let currentIndex = 0
+  //add eventListener for keyCodes
+    function control(e){
+        if(e.keyCode === 39){
+            moveRight()
+        }else if(e.keyCode === 38){
+            rotate()
+        }else if(e.keyCode === 37){
+            moveLeft()
+        }else if(e.keyCode === 40){
+            moveDown()
         }
 
-     //add frong class to new frog's index
-        squares[currentIndex].classList.add('frog')
-     //check if frog movement has led to win/loose
-        win()
-        loose()
+    }
+  //Event listener for keyUp for control func
+    document.addEventListener('keyup',control)
+
+  //The Tetrominos
+  const lTetromino = [
+    [1,width+1,width*2+1,2],
+    [width,width+1,width+2,width*2+2],
+    [1,width+1,width*2+1,width*2],
+    [width,width*2,width*2+1,width*2+2]
+  ]
+
+  const zTetromino = [
+    [0,width,width+1,width*2+1],
+    [width+1, width+2,width*2,width*2+1],
+    [0,width,width+1,width*2+1],
+    [width+1, width+2,width*2,width*2+1]
+  ]
+
+  const tTetromino = [
+    [1,width,width+1,width+2],
+    [1,width+1,width+2,width*2+1],
+    [width,width+1,width+2,width*2+1],
+    [1,width,width+1,width*2+1]
+  ]
+
+  const oTetromino = [
+    [0,1,width,width+1],
+    [0,1,width,width+1],
+    [0,1,width,width+1],
+    [0,1,width,width+1]
+  ]
+
+  const iTetromino = [
+    [1,width+1,width*2+1,width*3+1],
+    [width,width+1,width+2,width+3],
+    [1,width+1,width*2+1,width*3+1],
+    [width,width+1,width+2,width+3]
+  ]
+
+  //Tetrominos
+    const theTetrominoes = [lTetromino, zTetromino, tTetromino, oTetromino, iTetromino]
+
+  //Randmonly select tetrominos rotation
+    let random = Math.floor(Math.random() * theTetrominoes.length)
+    let current = theTetrominoes[random][currentRotation]
+
+  //draw the tetromino shape
+    function draw(){
+        console.log('draw')
+        current.forEach(index => {
+            squares[currentPosition + index].classList.add('block')
+        })
+    }
+  //undraw the tetromino shape
+    function undraw(){
+        current.forEach(index => {
+            squares[currentPosition + index].classList.remove('block')
+        })
+    }
+  //move shape down
+    function moveDown(){
+        undraw()
+        currentPosition = currentPosition +=width
+        draw()
+        freeze()
+    }
+  //move left and prevent collisons with shapes moving left
+    function moveRight(){
+        undraw()
+        const isAtRightEdge = current.some(index => (currentPosition + index) % width === width -1)
+        if(!isAtRightEdge) currentPosition +=1
+        //if any of the tetrimino element is in block2 ,we move to left
+        if(current.some(index=> squares[currentPosition + index].classList.contains('block2'))){
+            currentPosition -=1
+        }
+        draw()
+    }
+    function moveLeft(){
+        undraw()
+        const isAtLeftEdge = current.some(index=> (currentPosition + index) % width === 0)
+        if(!isAtLeftEdge) currentPosition -=1
+        if(current.some(index=> squares[currentPosition + index].classList.contains('block2'))){
+            currentPosition +=1
+        }
+        draw()
     }
 
-   //move cars
-    function autoMoveCars(){
-        carsLeft.forEach(carLeft => moveCarsLeft(carLeft))
-        carsRight.forEach(carRight => moveCarsRight(carRight))
-    }
-   //move the car left on a time loop
-    function moveCarsLeft(carLeft){
-        switch(true){
-            case carLeft.classList.contains('c1'):
-                carLeft.classList.remove('c1')
-                carLeft.classList.add('c2')
-                break;
-            case carLeft.classList.contains('c2'):
-                carLeft.classList.remove('c2')
-                carLeft.classList.add('c3')
-                break;
-            case carLeft.classList.contains('c3'):
-                carLeft.classList.remove('c3')
-                carLeft.classList.add('c1')
-                break;
+  //rotate tetrimino
+    function rotate(){
+        undraw()
+        currentRotation++
+        if(currentRotation === current.length){
+            currentRotation = 0
         }
+        current = theTetrominoes[random][currentRotation]
+        draw()
     }
-  //move the car right on a time loop
-    function moveCarsRight(carRight){
-        switch(true){
-            case carRight.classList.contains('c1'):
-                carRight.classList.remove('c1')
-                carRight.classList.add('c3')
-            break;
-            case carRight.classList.contains('c2'):
-                carRight.classList.remove('c2')
-                carRight.classList.add('c1')
-            break;
-            case carRight.classList.contains('c3'):
-                carRight.classList.remove('c3')
-                carRight.classList.add('c2')
-            break;
-        }
-    }
+    console.log('draw')
+    //draw()
+    //show privious tetriminos in displaysquare
+     const displayWidth = 4
+     const displayIndex = 0
+     let nextRandom = 0
+     const smallTetriminoes=[
+         [1,displayWidth+1,displayWidth*2+1,2], /*lTetriminoes*/
+         [0,displayWidth,displayWidth+1,displayWidth*2+1] , /*zTetriminoes*/
+         [1,displayWidth,displayWidth+1,displayWidth*2], /*tTetriminoes*/
+         [0,1,displayWidth,displayWidth+1], /*lTetriminoes*/
+         [1,displayWidth+1,displayWidth*2+1,displayWidth*3+1] /*iTetriminoes*/      
+     ]
+     function displayShape(){
+        displaySquares.forEach(square=>{
+            square.classList.remove('block')
+        })
+        smallTetriminoes[nextRandom].forEach(index=>{
+            displaySquares[displayIndex + index].classList.add('block')
+        })
+     }
+     //displayShape()
+     //freeze the shape
+     function freeze(){
+        if(current.some(index=> squares[currentPosition+index+width].classList.contains('block3')
+            ||squares[currentPosition+index+width].classList.contains('block2'))){
+                current.forEach(index=> squares[index+currentPosition].classList.add('block2'))
 
-  //move logs
-    function autoMoveLogs(){
-        logsLeft.forEach(logLeft => moveLogsLeft(logLeft))
-        logsRight.forEach(logRight => moveLogsRight(logRight))
-    }
-  //move logs Left
-    function moveLogsLeft(logLeft){
-        switch(true){
-            case logLeft.classList.contains('l1'):
-                logLeft.classList.remove('l1')
-                logLeft.classList.add('l2')
-                break;
-            case logLeft.classList.contains('l2'):
-                logLeft.classList.remove('l2')
-                logLeft.classList.add('l3')
-                break;
-            case logLeft.classList.contains('l3'):
-                logLeft.classList.remove('l3')
-                logLeft.classList.add('l4')
-                break;
-            case logLeft.classList.contains('l4'):
-                logLeft.classList.remove('l4')
-                logLeft.classList.add('l5')
-                break;
-            case logLeft.classList.contains('l5'):
-                logLeft.classList.remove('l5')
-                logLeft.classList.add('l1')
-                break;
-        }       
-    }
-  //move logs right
-    function moveLogsRight(logRight){
-        switch(true){
-            case logRight.classList.contains('l1'):
-                logRight.classList.remove('l1')
-                logRight.classList.add('l5')
-                break;
-            case logRight.classList.contains('l2'):
-                logRight.classList.remove('l2')
-                logRight.classList.add('l1')
-                break;
-            case logRight.classList.contains('l3'):
-                logRight.classList.remove('l3')
-                logRight.classList.add('l2')
-                break;
-            case logRight.classList.contains('l4'):
-                logRight.classList.remove('l4')
-                logRight.classList.add('l3')
-                break;
-            case logRight.classList.contains('l5'):
-                logRight.classList.remove('l5')
-                logRight.classList.add('l4')
-            
+            random = nextRandom
+            nextRandom = Math.floor(Math.random()*theTetrominoes.length)
+            current = theTetrominoes[random][currentRotation]
+            currentPosition = 4
+            draw()
+            displayShape()
+            gameOver()
+            addScore()
         }
-    }
-     
-   //Rules to win 
-    function win(){
-        if(squares[4].classList.contains('frog')){
-            resultDisplay.innerHTML='YOU WON!!'
-            squares[currentIndex].classList.remove('frog')
-            clearInterval(timerId)
-            document.removeEventListener('keyup',moveFrog)
-        }
-    }
-   //Rules to loose
-    function loose(){
-        if((currentTime === 0) || (squares[currentIndex].classList.contains('c1'))
-          || (squares[currentIndex].classList.contains('l5'))  
-          ||(squares[currentIndex].classList.contains('l4'))){
-              resultDisplay.innerHTML='YOU LOOSE'
-              resultDisplay.style.color = "red"
-              squares[currentIndex].classList.remove('frog')
+     }
+
+     //start game
+      startBtn.addEventListener('click',()=>{
+          if(timerId){
               clearInterval(timerId)
-              document.removeEventListener('keyup',moveFrog)
-        }
-    }
-   
-  //move the frog when its on the log moving left
-    function moveWithLogLeft(){
-        //we got the index of log from the html's hardcoded divs
-        if(currentIndex >=27 && currentIndex <35){
-            squares[currentIndex].classList.remove('frog') 
-            currentIndex +=1
-            squares[currentIndex].classList.add('frog')
-        }
-    }
-  //move the frog when its on the log movinf right
-    function moveWithLogRight(){
-        if(currentIndex > 18 && currentIndex <= 26){
-            squares[currentIndex].classList.remove('frog')
-            currentIndex -=1
-            squares[currentIndex].classList.add('frog')
-        }
-    }
-  //generate random HexColor
-    const generateRandomColor = () =>{
-        let hex = (Math.random() * 0xfffff * 1000000).toString(16)
-        return '#' + hex.slice(0,6)
-    }
-  //a collective function which handles all the moving pieces
-    function movePieces(){
-        console.log('peices moved')
-        currentTime--
-        timeLeft.textContent = currentTime
-        timeLeft.style.color = generateRandomColor()
-        autoMoveCars()
-        autoMoveLogs()
-        moveWithLogLeft()
-        moveWithLogRight()
-        loose()
-    }
-  //start/pause the game
-    startBtn.addEventListener('click',()=>{
-        console.log('start clicked')
-        if(timerId){
-            clearInterval(timerId)
-        }else{
-            timerId = setInterval(movePieces,1000)
-            document.addEventListener('keyup',moveFrog)
-        }
-    })
+              timerId = null
+          }else{
+              draw()
+              timerId = setInterval(moveDown,1000)
+              nextRandom = Math.floor(Math.random()* theTetrominoes.length)
+              displayShape()
+          }
+      })
+     //game over
+      function gameOver(){
+          if(current.some(index=> squares[currentPosition+index].classList.contains('block2'))){
+                scoreDisplay.innerHTML = 'End'              
+                clearInterval(timerId)
+          }
+      }
+     //add score
+      function addScore(){
+          for(currentIndex = 0;currentIndex < 199; currentIndex +=width ){
+              const row=[currentIndex,currentIndex+1,currentIndex+2,currentIndex+3,currentIndex+4,currentIndex+5,currentIndex+6,currentIndex+7,
+            currentIndex+8,currentIndex+9]
+              
+            if(row.every(index=> squares[index].classList.contains('block2'))){
+                score +=10
+                lines +=1
+                scoreDisplay.innerHTML = score
+                lineDisplay.innerHTML = lines
+
+                row.forEach(index=>{
+                    squares[index].classList.remove('block2') || squares[index].classList.remove('block')
+                })
+                //splice array
+                const squaresRemoved= squares.splice(currentIndex,width)
+                squares = squaresRemoved.concat(squares)
+                squares.forEach(cell=> grid.appendChild(cell))
+            }
+                
+          }
+      }
 
 })

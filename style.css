@@ -1,36 +1,59 @@
-.grid {
-  border: 1px solid;
-  display: flex;
-  flex-wrap: wrap;
-  height: 180px;
-  width: 180px;
-}
-.grid div {
+div {
+  background-color: greenyellow;
   height: 20px;
   width: 20px;
 }
-.ending-block {
-  background-color: red;
+.grid {
+  height: 400px;
+  width: 200px;
+  display: flex;
+  flex-wrap: wrap;
 }
-.starting-block {
+.previous-grid {
+  height: 80px;
+  width: 80px;
+  display: flex;
+  flex-wrap: wrap;
+}
+.previous-shape {
+  height: 80px;
+  width: 80px;
+}
+.block {
   background-color: blue;
 }
-.c1 {
-  background-color: black;
+.block2 {
+  background-color: purple;
 }
-.c2,
-.c3 {
-  background-color: grey;
-}
-.l1,
-.l2,
-.l3 {
-  background-color: brown;
-}
-.l4,
-.l5 {
-  background-color: lightblue;
-}
-.frog {
+.block3 {
   background-color: green;
+}
+main {
+  margin: auto;
+  display: flex;
+  justify-content: center;
+  margin-left: 60px;
+  margin-top: 0px;
+}
+
+.column-left {
+  display: flex;
+  justify-content: center;
+  display: inline;
+  margin-left: 60px;
+}
+
+.score {
+  padding-top: 15px;
+  letter-spacing: 1px;
+  font-size: 12px;
+  color: #85796b;
+  padding-bottom: 0px;
+  margin-bottom: 0px;
+}
+.lines-display {
+  letter-spacing: 1px;
+  font-size: 12px;
+  color: #85796b;
+  margin-left: -60px;
 }
